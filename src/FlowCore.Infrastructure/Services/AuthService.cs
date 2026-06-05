@@ -1,0 +1,120 @@
+﻿using FlowCore.Application.DTOs.Auth;
+using FlowCore.Application.Interfaces;
+using FlowCore.Domain.Entities;
+using FlowCore.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using FlowCore.Domain.Exceptions;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace FlowCore.Infrastructure.Services
+{
+    public class AuthService : IAuthService
+    {
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _config;
+
+        public AuthService(AppDbContext context, IConfiguration config)
+        {
+            _context = context;
+            _config = config;
+        }
+
+        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+        {
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+                throw new AppException("Email already in use", 400);
+
+            var user = new User
+            {
+                UserName = request.Username,
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return await GenerateAuthResponse(user);
+        }
+
+        public async Task<AuthResponse> LoginAsync(LoginRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email)
+                ?? throw new AppException("Invalid credentials", 401);
+
+            if(!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                throw new AppException("Invalid credentials", 401);
+
+            return await GenerateAuthResponse(user);
+        }
+
+        public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken)
+                ?? throw new AppException("Invalid refresh token", 401);
+            if (user.RefreshTokenExpiry < DateTime.UtcNow)
+                throw new AppException("Refresh token expired", 401);
+
+            return await GenerateAuthResponse(user);
+        }
+
+        private async Task<AuthResponse> GenerateAuthResponse(User user)
+        {
+            var accessToken = GenerateAccessToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(
+                _config.GetValue<int>("Jwt:RefreshTokenExpiryDays", 7));
+            
+            await _context.SaveChangesAsync();
+
+            return new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                UserName = user.UserName,
+                Role = user.Role.ToString()
+            };
+        }
+
+        private static string GenerateRefreshToken()
+        {
+            var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(bytes);
+        }
+
+        private string GenerateAccessToken(User user)
+        {
+            var key = new SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub,user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email,user.Email),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:ExpiryMinutes", 60)),
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+
+        }
+    }
+}
