@@ -25,7 +25,7 @@ namespace FlowCore.API.Controllers
             return Ok(categories);
         }
 
-        [HttpGet]
+        [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var category = await _categoryService.GetByIdAsync(id);
