@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text;
 using FlowCore.Application.Interfaces;
 using FlowCore.Application.Validators;
 using FlowCore.Domain.Exceptions;
@@ -9,7 +11,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +33,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme { Reference = new OpenApiReference {Type = ReferenceType.SecurityScheme, Id = "Bearer"}},
+            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
             Array.Empty<string>()
         }
     });
@@ -53,7 +54,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            RoleClaimType = ClaimTypes.Role
         };
     });
 
@@ -74,7 +76,6 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FlowCore API v1"));
 
-
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
@@ -84,13 +85,17 @@ app.UseExceptionHandler(errorApp =>
         {
             context.Response.StatusCode = appEx.StatusCode;
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsJsonAsync(new { error = "An unexcepted error occurred" });
+            await context.Response.WriteAsJsonAsync(new { error = appEx.Message });
+        }
+        else
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { error = "An unexpected error occurred" });
         }
     });
 });
 
-
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

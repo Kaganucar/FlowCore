@@ -51,6 +51,9 @@ namespace FlowCore.Infrastructure.Services
 
         public async Task<CategoryResponse> CreateAsync(CreateCategoryRequest request)
         {
+            if (await _context.Categories.AnyAsync(c => c.Name == request.Name))
+                throw new AppException("Category already exists", 400);
+
             var category = new Category { Name = request.Name };
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();

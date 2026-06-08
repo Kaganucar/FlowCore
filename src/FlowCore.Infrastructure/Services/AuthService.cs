@@ -96,13 +96,14 @@ namespace FlowCore.Infrastructure.Services
         {
             var key = new SymmetricSecurityKey(
                 System.Text.Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+            key.KeyId = "flowcore-key";
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub,user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email,user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim("role", user.Role.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
