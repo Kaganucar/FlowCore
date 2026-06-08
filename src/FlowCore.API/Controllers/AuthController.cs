@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FlowCore.Application.DTOs.Auth;
+using FlowCore.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FlowCore.API.Controllers
 {
@@ -7,9 +9,32 @@ namespace FlowCore.API.Controllers
     public class AuthController : ControllerBase
     {
 
-        public IActionResult Index()
+        private readonly IAuthService _authService;
+
+        public AuthController(IAuthService authService)
         {
-            return View();
+            _authService = authService;
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            var response = await _authService.RegisterAsync(request);
+            return Ok(response);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var response = await _authService.LoginAsync(request);
+            return Ok(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+        {
+            var response = await _authService.RefreshTokenAsync(request.RefreshToken);
+            return Ok(response);
         }
     }
 }
