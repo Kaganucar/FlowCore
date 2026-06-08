@@ -30,7 +30,7 @@ namespace FlowCore.API.Controllers
             return Ok(response);
         }
 
-        [HttpPost]
+        [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
             var response = await _authService.RefreshTokenAsync(request.RefreshToken);
