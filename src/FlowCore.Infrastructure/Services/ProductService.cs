@@ -4,6 +4,7 @@ using FlowCore.Application.Interfaces;
 using FlowCore.Domain.Entities;
 using FlowCore.Domain.Exceptions;
 using FlowCore.Infrastructure.Persistence;
+using FlowCore.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -15,54 +16,53 @@ namespace FlowCore.Infrastructure.Services
 {
     public class ProductService : IProductService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ProductService(AppDbContext context)
+        public ProductService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<ProductResponse>> GetProductsAsync()
         {
-            return await _context.Products
-                .Include(p => p.Category)
-                .Select(p => new ProductResponse
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Price = p.Price,
-                    Stock = p.Stock,
-                    CategoryName = p.Category.Name,
-                    CreatedAt = p.CreatedAt
-                })
-                .ToListAsync();
+            var products = await _unitOfWork.Products.GetAllAsync();
+
+            return products.Select(p => new ProductResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                Stock = p.Stock,
+                CategoryName = p.Category?.Name ?? string.Empty,
+                CreatedAt = p.CreatedAt
+            }).ToList();
         }
 
         public async Task<ProductResponse> GetByIdAsync(Guid id)
         {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id)
-                ?? throw new AppException($"Product {id} not found", 404);
+            var product = await _unitOfWork.Products.GetByIdWithCategoryAsync(id);
+
+            if (product == null)
+                throw new AppException($"Product {id} not found", 404);
 
             return new ProductResponse
             {
-                Id = product.Id,
+                Id = id,
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
                 Stock = product.Stock,
-                CategoryName = product.Category.Name,
+                CategoryName = product.Category?.Name ?? string.Empty,
                 CreatedAt = product.CreatedAt
             };
         }
 
         public async Task<ProductResponse> CreateAsync(CreateProductRequest request)
         {
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
+            var categoryExists = await _unitOfWork.Categories.AnyAsync(c => c.Id == request.CategoryId);
             if (!categoryExists)
-                throw new AppException($"Caategory {request.CategoryId} not found", 404);
+                throw new AppException($"Category {request.CategoryId} not found", 404);
 
             var product = new Product
             {
@@ -74,45 +74,44 @@ namespace FlowCore.Infrastructure.Services
 
             };
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
-            await _context.Entry(product).Reference(p=> p.Category).LoadAsync();
+            await _unitOfWork.Products.AddAsync(product);
+            await _unitOfWork.SaveChangesAsync();
+
+            var createdProduct = await _unitOfWork.Products.GetByIdWithCategoryAsync(product.Id);
 
             return new ProductResponse
             {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = product.Price,
-                Stock = product.Stock,
-                CategoryName = product.Category.Name,
-                CreatedAt = product.CreatedAt
+                Id = createdProduct.Id,
+                Name = createdProduct.Name,
+                Description = createdProduct.Description,
+                Price = createdProduct.Price,
+                Stock = createdProduct.Stock,
+                CategoryName = createdProduct.Category?.Name ?? string.Empty,
+                CreatedAt = createdProduct.CreatedAt
             };
         }
 
         public async Task<ProductResponse> UpdateAsync(Guid id, UpdateProductRequest request)
         {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id)
+            var product = await _unitOfWork.Products.GetByIdWithCategoryAsync(id)
                 ?? throw new AppException($"Product {id} not found", 404);
 
             if(!string.IsNullOrWhiteSpace(request.Name)) product.Name = request.Name;
             if(!string.IsNullOrWhiteSpace(request.Description)) product.Description = request.Description;
-            if (request.Price.HasValue) product.Price = request.Price.Value;
-            if (request.Stock.HasValue) product.Price = request.Stock.Value;
+            if(request.Price.HasValue) product.Price = request.Price.Value;
+            if(request.Stock.HasValue) product.Stock = request.Stock.Value;
 
-            await _context.SaveChangesAsync();
+            product.UpdatedAt = DateTime.UtcNow;
+            _unitOfWork.Products.Update(product);
+            await _unitOfWork.SaveChangesAsync();
 
             return new ProductResponse
             {
-                Id = product.Id,
+                Id = id,
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
                 Stock = product.Stock,
-                CategoryName = product.Category.Name,
-                CreatedAt = product.CreatedAt
             };
         }
 
