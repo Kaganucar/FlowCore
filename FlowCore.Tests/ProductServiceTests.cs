@@ -27,8 +27,9 @@ namespace FlowCore.Tests
         public async Task CreateAsync_ShouldCreateProduct()
         {
             var context = CreateInMemoryContext();
-            var categoryService = new CategoryService(context);
-            var productService = new ProductService(context);
+            var unitOfWork = new FlowCore.Infrastructure.UnitOfWork.UnitOfWork(context);
+            var categoryService = new CategoryService(unitOfWork);
+            var productService = new ProductService(unitOfWork);
 
             var category = await categoryService.CreateAsync(new CreateCategoryRequest { Name = "Elektronik" });
 
@@ -52,7 +53,8 @@ namespace FlowCore.Tests
         public async Task GetByIdAsync_ShouldThrowException()
         {
             var context = CreateInMemoryContext();
-            var productService = new ProductService(context);
+            var unitOfWork = new FlowCore.Infrastructure.UnitOfWork.UnitOfWork(context);
+            var productService = new ProductService(unitOfWork);
 
             await Assert.ThrowsAsync<AppException>(() => productService.GetByIdAsync(Guid.NewGuid()));
         }

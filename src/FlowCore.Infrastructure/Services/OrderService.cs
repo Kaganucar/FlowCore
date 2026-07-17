@@ -14,11 +14,11 @@ namespace FlowCore.Infrastructure.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public OrderService(AppDbContext context)
+        public OrderService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public Task<OrderResponse> CancelAsync(Guid id)
@@ -28,14 +28,12 @@ namespace FlowCore.Infrastructure.Services
 
         public async Task<OrderResponse> CreateAsync(CreateOrderRequest request, Guid userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId)
+            var user = await _unitOfWork.Users.GetByIdAsync(userId)
                 ?? throw new AppException("User not found", 404);
 
             var productIds = request.Items.Select(i => i.ProductId).ToList();
 
-            var products = await _context.Products
-                .Where(p=> productIds.Contains(p.Id))
-                .ToListAsync();
+            var products = await _unitOfWork.Products.FindAsync(p => productIds.Contains(p.Id));
 
             var productDict = products.ToDictionary(p => p.Id);
 
@@ -57,6 +55,7 @@ namespace FlowCore.Infrastructure.Services
                 });
 
                 product.Stock -= item.Quantity;
+                _unitOfWork.Products.Update(product);
             }
 
             var order = new Order
@@ -68,8 +67,8 @@ namespace FlowCore.Infrastructure.Services
 
             order.TotalAmount = order.OrderItems.Sum(i => i.Quantity * i.UnitPrice);
 
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Orders.AddAsync(order);
+            await _unitOfWork.SaveChangesAsync();
 
             return new OrderResponse
             {
@@ -88,14 +87,48 @@ namespace FlowCore.Infrastructure.Services
             };
         }
 
-        public Task<List<OrderResponse>> GetAllAsync()
+        public async Task<List<OrderResponse>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            var orders = await _unitOfWork.Orders.GetAllWithDetailsAsync();
+
+            return orders.Select(order => new OrderResponse
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                UserName = order.User?.UserName ?? string.Empty,
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                Items = order.OrderItems.Select(i => new OrderItemResponse
+                {
+                    ProductId = i.ProductId,
+                    ProductName = i.Product?.Name ?? string.Empty,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                }).ToList()
+
+            }).ToList();
         }
 
-        public Task<OrderResponse> GetByIdAsync(Guid id)
+        public async Task<OrderResponse> GetByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id)
+                ?? throw new AppException($"Order {id} not found", 404);
+
+            return new OrderResponse
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                UserName = order.User?.UserName ?? string.Empty,
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                Items = order.OrderItems.Select(i => new OrderItemResponse
+                {
+                    ProductId = i.ProductId,
+                    ProductName = i.Product?.Name ?? string.Empty,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                }).ToList()
+            };
         }
     }
 

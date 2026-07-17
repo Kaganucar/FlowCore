@@ -11,5 +11,6 @@ namespace FlowCore.Application.Interfaces
     {
         Task<List<Order>> GetAllUserOrdersAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<Order?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<List<Order>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default);
     }
 }

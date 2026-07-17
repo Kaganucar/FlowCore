@@ -112,16 +112,18 @@ namespace FlowCore.Infrastructure.Services
                 Description = product.Description,
                 Price = product.Price,
                 Stock = product.Stock,
+                CategoryName = product.Category?.Name ?? string.Empty,
+                CreatedAt = product.CreatedAt
             };
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            var product = await _context.Products.FindAsync(id)
+            var product = await _unitOfWork.Products.GetByIdAsync(id)
                 ?? throw new AppException($"Product {id} not found", 404);
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            _unitOfWork.Products.Remove(product);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

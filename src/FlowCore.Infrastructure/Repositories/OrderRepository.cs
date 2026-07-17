@@ -29,5 +29,14 @@ namespace FlowCore.Infrastructure.Repositories
                 .ThenInclude(oi => oi.Product)
                 .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
         }
+
+        public async Task<List<Order>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

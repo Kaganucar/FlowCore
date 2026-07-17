@@ -18,18 +18,18 @@ namespace FlowCore.Infrastructure.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _config;
 
-        public AuthService(AppDbContext context, IConfiguration config)
+        public AuthService(IUnitOfWork unitOfWork, IConfiguration config)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
             _config = config;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+            if (await _unitOfWork.Users.AnyEmailAsync(request.Email))
                 throw new AppException("Email already in use", 400);
 
             var user = new User
@@ -39,15 +39,15 @@ namespace FlowCore.Infrastructure.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Users.AddAsync(user);
+            await _unitOfWork.SaveChangesAsync();
 
             return await GenerateAuthResponse(user);
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email)
+            var user = await _unitOfWork.Users.GetByEmailAsync(request.Email)
                 ?? throw new AppException("Invalid credentials", 401);
 
             if(!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -58,7 +58,7 @@ namespace FlowCore.Infrastructure.Services
 
         public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken)
+            var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken)
                 ?? throw new AppException("Invalid refresh token", 401);
             if (user.RefreshTokenExpiry < DateTime.UtcNow)
                 throw new AppException("Refresh token expired", 401);
@@ -75,7 +75,7 @@ namespace FlowCore.Infrastructure.Services
             user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(
                 _config.GetValue<int>("Jwt:RefreshTokenExpiryDays", 7));
             
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new AuthResponse
             {

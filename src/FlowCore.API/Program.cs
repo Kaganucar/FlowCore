@@ -64,6 +64,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IUnitOfWork, FlowCore.Infrastructure.UnitOfWork.UnitOfWork>();
 
 var app = builder.Build();
 

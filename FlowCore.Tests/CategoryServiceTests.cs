@@ -26,7 +26,8 @@ namespace FlowCore.Tests
         public async Task CreateAsync_ShouldCreateCategory()
         {
             var context = CreateInMemoryContext();
-            var service = new CategoryService(context);
+            var unitOfWork = new FlowCore.Infrastructure.UnitOfWork.UnitOfWork(context);
+            var service = new CategoryService(unitOfWork);
             var request = new CreateCategoryRequest { Name = "Elektronik" };
 
             var result = await service.CreateAsync(request);
@@ -40,7 +41,8 @@ namespace FlowCore.Tests
         public async Task GetByIdAsync_ShouldThrowException_WhenNotFound()
         {
             var context = CreateInMemoryContext();
-            var service = new CategoryService(context);
+            var unitOfWork = new FlowCore.Infrastructure.UnitOfWork.UnitOfWork(context);
+            var service = new CategoryService(unitOfWork);
 
             await Assert.ThrowsAsync<AppException>(() =>
             service.GetByIdAsync(Guid.Empty));
@@ -50,7 +52,8 @@ namespace FlowCore.Tests
         public async Task GetAllAsync_ShouldReturnAllCategories()
         {
             var context = CreateInMemoryContext();
-            var service = new CategoryService(context);
+            var unitOfWork = new FlowCore.Infrastructure.UnitOfWork.UnitOfWork(context);
+            var service = new CategoryService(unitOfWork);
 
             await service.CreateAsync(new CreateCategoryRequest { Name = "Elektronik" });
             await service.CreateAsync(new CreateCategoryRequest { Name = "Giyim" });

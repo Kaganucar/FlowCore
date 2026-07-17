@@ -3,6 +3,7 @@ using FlowCore.Application.Interfaces;
 using FlowCore.Domain.Entities;
 using FlowCore.Domain.Exceptions;
 using FlowCore.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -14,30 +15,29 @@ namespace FlowCore.Infrastructure.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CategoryService(AppDbContext context)
+        public CategoryService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<List<CategoryResponse>> GetAllAsync()
         {
-            return await _context.Categories
-                .Select(c => new CategoryResponse
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    ProductCount = c.Products.Count
-                })
-                .ToListAsync();
+            var categories = await _unitOfWork.Categories.GetAllWithProductsAsync();
+
+            return categories.Select(c => new CategoryResponse
+            {
+                Id = c.Id,
+                Name = c.Name,
+                ProductCount = c.Products.Count
+            }).ToList();
         }
 
         public async Task<CategoryResponse> GetByIdAsync(Guid id)
         {
-            var category = await _context.Categories
-                .Include(c => c.Products)
-                .FirstOrDefaultAsync(c => c.Id == id)
+            var categories = await _unitOfWork.Categories.GetAllWithProductsAsync();
+            var category = categories.FirstOrDefault(c => c.Id == id)
                 ?? throw new AppException($"Category {id} not found", 404);
 
             return new CategoryResponse
@@ -46,17 +46,17 @@ namespace FlowCore.Infrastructure.Services
                 Name = category.Name,
                 ProductCount = category.Products.Count
             };
-
         }
 
         public async Task<CategoryResponse> CreateAsync(CreateCategoryRequest request)
         {
-            if (await _context.Categories.AnyAsync(c => c.Name == request.Name))
+            if (await _unitOfWork.Categories.AnyAsync(c => c.Name == request.Name))
                 throw new AppException("Category already exists", 400);
 
             var category = new Category { Name = request.Name };
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+
+            await _unitOfWork.Categories.AddAsync(category);
+            await _unitOfWork.SaveChangesAsync();
 
             return new CategoryResponse
             {
@@ -68,11 +68,11 @@ namespace FlowCore.Infrastructure.Services
 
         public async Task DeleteAsync(Guid id)
         {
-            var category = await _context.Categories.FindAsync(id)
+            var category = await _unitOfWork.Categories.GetByIdAsync(id)
                 ?? throw new AppException($"Category {id} not found", 404);
 
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
+            _unitOfWork.Categories.Remove(category);
+            await _unitOfWork.SaveChangesAsync();
         }
         
     }
