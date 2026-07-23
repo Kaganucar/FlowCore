@@ -1,4 +1,5 @@
-﻿using FlowCore.Application.DTOs.Category;
+﻿using FlowCore.Application.Common;
+using FlowCore.Application.DTOs.Category;
 using FlowCore.Application.DTOs.Product;
 using FlowCore.Application.Interfaces;
 using FlowCore.Domain.Entities;
@@ -39,14 +40,15 @@ namespace FlowCore.Infrastructure.Services
             }).ToList();
         }
 
-        public async Task<ProductResponse> GetByIdAsync(Guid id)
+        public async Task<Result<ProductResponse>> GetByIdAsync(Guid id)
         {
             var product = await _unitOfWork.Products.GetByIdWithCategoryAsync(id);
 
             if (product == null)
-                throw new AppException($"Product {id} not found", 404);
+                return Result<ProductResponse>.Failure($"Product {id} not found", 404);
 
-            return new ProductResponse
+
+            var response = new ProductResponse
             {
                 Id = id,
                 Name = product.Name,
@@ -56,13 +58,15 @@ namespace FlowCore.Infrastructure.Services
                 CategoryName = product.Category?.Name ?? string.Empty,
                 CreatedAt = product.CreatedAt
             };
+
+            return Result<ProductResponse>.Success(response);
         }
 
-        public async Task<ProductResponse> CreateAsync(CreateProductRequest request)
+        public async Task<Result<ProductResponse>> CreateAsync(CreateProductRequest request)
         {
             var categoryExists = await _unitOfWork.Categories.AnyAsync(c => c.Id == request.CategoryId);
             if (!categoryExists)
-                throw new AppException($"Category {request.CategoryId} not found", 404);
+                return Result<ProductResponse>.Failure($"Category {request.CategoryId} not found",404);
 
             var product = new Product
             {
@@ -79,7 +83,7 @@ namespace FlowCore.Infrastructure.Services
 
             var createdProduct = await _unitOfWork.Products.GetByIdWithCategoryAsync(product.Id);
 
-            return new ProductResponse
+            var response = new ProductResponse
             {
                 Id = createdProduct.Id,
                 Name = createdProduct.Name,
@@ -89,12 +93,16 @@ namespace FlowCore.Infrastructure.Services
                 CategoryName = createdProduct.Category?.Name ?? string.Empty,
                 CreatedAt = createdProduct.CreatedAt
             };
+
+            return Result<ProductResponse>.Success(response);
         }
 
-        public async Task<ProductResponse> UpdateAsync(Guid id, UpdateProductRequest request)
+        public async Task<Result<ProductResponse>> UpdateAsync(Guid id, UpdateProductRequest request)
         {
-            var product = await _unitOfWork.Products.GetByIdWithCategoryAsync(id)
-                ?? throw new AppException($"Product {id} not found", 404);
+            var product = await _unitOfWork.Products.GetByIdWithCategoryAsync(id);
+
+            if(product == null)
+                return Result<ProductResponse>.Failure($"Product {id} not found", 404);
 
             if(!string.IsNullOrWhiteSpace(request.Name)) product.Name = request.Name;
             if(!string.IsNullOrWhiteSpace(request.Description)) product.Description = request.Description;
@@ -105,7 +113,7 @@ namespace FlowCore.Infrastructure.Services
             _unitOfWork.Products.Update(product);
             await _unitOfWork.SaveChangesAsync();
 
-            return new ProductResponse
+            var response = new ProductResponse
             {
                 Id = id,
                 Name = product.Name,
@@ -114,16 +122,23 @@ namespace FlowCore.Infrastructure.Services
                 Stock = product.Stock,
                 CategoryName = product.Category?.Name ?? string.Empty,
                 CreatedAt = product.CreatedAt
+
             };
+
+            return Result<ProductResponse>.Success(response);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<Result<bool>> DeleteAsync(Guid id)
         {
-            var product = await _unitOfWork.Products.GetByIdAsync(id)
-                ?? throw new AppException($"Product {id} not found", 404);
+            var product = await _unitOfWork.Products.GetByIdAsync(id);
+
+            if (product == null)
+                return Result<bool>.Failure($"Product {id} not found", 404);
 
             _unitOfWork.Products.Remove(product);
             await _unitOfWork.SaveChangesAsync();
+
+            return Result<bool>.Success(true);
         }
     }
 }

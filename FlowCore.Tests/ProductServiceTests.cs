@@ -39,13 +39,13 @@ namespace FlowCore.Tests
                 Description = "Test Ürün",
                 Price = 1000,
                 Stock = 5,
-                CategoryId = category.Id
+                CategoryId = category.Value.Id
             };
 
             var result = await productService.CreateAsync(request);
             Assert.NotNull(result);
-            Assert.Equal("Laptop", result.Name);
-            Assert.NotEqual(Guid.Empty, result.Id);
+            Assert.Equal("Laptop", result.Value.Name);
+            Assert.NotEqual(Guid.Empty, result.Value.Id);
 
         }
 
@@ -56,7 +56,10 @@ namespace FlowCore.Tests
             var unitOfWork = new FlowCore.Infrastructure.UnitOfWork.UnitOfWork(context);
             var productService = new ProductService(unitOfWork);
 
-            await Assert.ThrowsAsync<AppException>(() => productService.GetByIdAsync(Guid.NewGuid()));
+            var result = await productService.GetByIdAsync(Guid.NewGuid());
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(404, result.StatusCode);
         }
     }
 }

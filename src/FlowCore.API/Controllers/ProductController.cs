@@ -1,4 +1,5 @@
-﻿using FlowCore.Application.DTOs.Product;
+﻿using FlowCore.Application.Common;
+using FlowCore.Application.DTOs.Product;
 using FlowCore.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,31 +27,50 @@ namespace FlowCore.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var products = await _productService.GetByIdAsync(id);
-            return Ok(products);
+            var result = await _productService.GetByIdAsync(id);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, new { error = result.Error });
+            }
+
+            return Ok(result.Value);
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
         {
-            var product = await _productService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new {id = product.Id}, product);
+           var result = await _productService.CreateAsync(request);
+
+           if(!result.IsSuccess)
+                return StatusCode(result.StatusCode, new {error = result.Error});
+
+           return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
         }
 
         [HttpPut("{id:guid}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
         {
-            var product = await _productService.UpdateAsync(id, request);
-            return Ok(product);
+            var result = await _productService.UpdateAsync(id, request);
+
+            if (!result.IsSuccess)
+                return StatusCode(result.StatusCode, new { error = result.Error });
+
+            return Ok(result.Value);
+            
         }
 
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _productService.DeleteAsync(id);
+            var result = await _productService.DeleteAsync(id);
+            
+            if (!result.IsSuccess)
+                return StatusCode(result.StatusCode, new { error = result.Error });
+
             return NoContent();
         }
     }

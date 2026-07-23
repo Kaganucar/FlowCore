@@ -1,4 +1,5 @@
-﻿using FlowCore.Application.DTOs.Category;
+﻿using FlowCore.Application.Common;
+using FlowCore.Application.DTOs.Category;
 using FlowCore.Application.Interfaces;
 using FlowCore.Domain.Entities;
 using FlowCore.Domain.Exceptions;
@@ -34,45 +35,58 @@ namespace FlowCore.Infrastructure.Services
             }).ToList();
         }
 
-        public async Task<CategoryResponse> GetByIdAsync(Guid id)
+        public async Task<Result<CategoryResponse>> GetByIdAsync(Guid id)
         {
             var categories = await _unitOfWork.Categories.GetAllWithProductsAsync();
-            var category = categories.FirstOrDefault(c => c.Id == id)
-                ?? throw new AppException($"Category {id} not found", 404);
+            var category = categories.FirstOrDefault(c => c.Id == id);
 
-            return new CategoryResponse
+            if (category == null)
+                return Result<CategoryResponse>.Failure($"Category {id} not found", 404);
+
+
+           var response = new CategoryResponse
             {
                 Id = category.Id,
                 Name = category.Name,
                 ProductCount = category.Products.Count
             };
+
+            return Result<CategoryResponse>.Success(response);
         }
 
-        public async Task<CategoryResponse> CreateAsync(CreateCategoryRequest request)
+        public async Task<Result<CategoryResponse>> CreateAsync(CreateCategoryRequest request)
         {
-            if (await _unitOfWork.Categories.AnyAsync(c => c.Name == request.Name))
-                throw new AppException("Category already exists", 400);
+            var categoryExists = await _unitOfWork.Categories.AnyAsync(c => c.Name == request.Name);
+
+            if (categoryExists)
+                return Result<CategoryResponse>.Failure("Category already exists", 400);
+
 
             var category = new Category { Name = request.Name };
 
             await _unitOfWork.Categories.AddAsync(category);
             await _unitOfWork.SaveChangesAsync();
 
-            return new CategoryResponse
+            var response = new CategoryResponse
             {
                 Id = category.Id,
                 Name = category.Name,
                 ProductCount = 0
             };
+            return Result<CategoryResponse>.Success(response);
         }
 
-        public async Task DeleteAsync(Guid id)
+        public async Task<Result<bool>> DeleteAsync(Guid id)
         {
-            var category = await _unitOfWork.Categories.GetByIdAsync(id)
-                ?? throw new AppException($"Category {id} not found", 404);
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
+                
+            if (category == null)
+                return Result<bool>.Failure($"Category {id} not found", 404);
 
             _unitOfWork.Categories.Remove(category);
             await _unitOfWork.SaveChangesAsync();
+
+            return Result<bool>.Success(true);
         }
         
     }

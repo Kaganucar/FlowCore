@@ -1,4 +1,5 @@
-﻿using FlowCore.Application.DTOs.Product;
+﻿using FlowCore.Application.Common;
+using FlowCore.Application.DTOs.Product;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +11,9 @@ namespace FlowCore.Application.Interfaces
     public interface IProductService
     {
         Task<List<ProductResponse>> GetProductsAsync();
-        Task<ProductResponse> GetByIdAsync(Guid id);
-        Task<ProductResponse> CreateAsync(CreateProductRequest request);
-        Task<ProductResponse> UpdateAsync(Guid id, UpdateProductRequest request);
-        Task DeleteAsync(Guid id);
+        Task<Result<ProductResponse>> GetByIdAsync(Guid id);
+        Task<Result<ProductResponse>> CreateAsync(CreateProductRequest request);
+        Task<Result<ProductResponse>> UpdateAsync(Guid id, UpdateProductRequest request);
+        Task<Result<bool>> DeleteAsync(Guid id);
     }
 }

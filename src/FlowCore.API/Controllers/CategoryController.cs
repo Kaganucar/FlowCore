@@ -28,23 +28,38 @@ namespace FlowCore.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var category = await _categoryService.GetByIdAsync(id);
-            return Ok(category);
+            var result = await _categoryService.GetByIdAsync(id);
+            if (!result.IsSuccess) 
+            {
+                return StatusCode(result.StatusCode, new { error = result.Error });
+            }
+
+            return Ok(result.Value);
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
         {
-            var category = await _categoryService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = category.Id }, category);
+            var result = await _categoryService.CreateAsync(request);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, new { error = result.Error });
+            }
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
         }
 
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _categoryService.DeleteAsync(id);
+            var result = await _categoryService.DeleteAsync(id);
+
+            if(!result.IsSuccess)
+                return StatusCode(result.StatusCode, new { error = result.Error });
+
             return NoContent();
         }
 

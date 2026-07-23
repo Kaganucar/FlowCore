@@ -1,4 +1,5 @@
-﻿using FlowCore.Application.DTOs.Category;
+﻿using FlowCore.Application.Common;
+using FlowCore.Application.DTOs.Category;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +11,8 @@ namespace FlowCore.Application.Interfaces
     public interface ICategoryService
     {
         Task<List<CategoryResponse>> GetAllAsync();
-        Task<CategoryResponse> GetByIdAsync(Guid id);
-        Task<CategoryResponse> CreateAsync(CreateCategoryRequest request);
-        Task DeleteAsync(Guid id);
+        Task<Result<CategoryResponse>> GetByIdAsync(Guid id);
+        Task<Result<CategoryResponse>> CreateAsync(CreateCategoryRequest request);
+        Task<Result<bool>> DeleteAsync(Guid id);
     }
 }

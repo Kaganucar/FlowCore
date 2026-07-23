@@ -33,19 +33,21 @@ namespace FlowCore.Tests
             var result = await service.CreateAsync(request);
 
             Assert.NotNull(result);
-            Assert.Equal("Elektronik", result.Name);
-            Assert.NotEqual(Guid.Empty, result.Id);
+            Assert.Equal("Elektronik", result.Value.Name);
+            Assert.NotEqual(Guid.Empty, result.Value.Id);
         }
 
         [Fact]
-        public async Task GetByIdAsync_ShouldThrowException_WhenNotFound()
+        public async Task GetByIdAsync_ShouldReturnFailure_WhenNotFound()
         {
             var context = CreateInMemoryContext();
             var unitOfWork = new FlowCore.Infrastructure.UnitOfWork.UnitOfWork(context);
             var service = new CategoryService(unitOfWork);
 
-            await Assert.ThrowsAsync<AppException>(() =>
-            service.GetByIdAsync(Guid.Empty));
+            var result = await service.GetByIdAsync(Guid.Empty);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal(404, result.StatusCode);
         }
 
         [Fact]
