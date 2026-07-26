@@ -1,4 +1,5 @@
 ﻿using FlowCore.Application.DTOs.Auth;
+using FlowCore.Application.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,8 @@ namespace FlowCore.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<AuthResponse> RegisterAsync(RegisterRequest request);
-        Task<AuthResponse> LoginAsync(LoginRequest request);
-        Task<AuthResponse> RefreshTokenAsync(string refreshToken);
+        Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request);
+        Task<Result<AuthResponse>> LoginAsync(LoginRequest request);
+        Task<Result<AuthResponse>> RefreshTokenAsync(string refreshToken);
     }
 }

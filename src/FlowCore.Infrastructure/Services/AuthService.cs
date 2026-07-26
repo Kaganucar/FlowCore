@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FlowCore.Application.Common;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace FlowCore.Infrastructure.Services
 {
@@ -27,10 +29,12 @@ namespace FlowCore.Infrastructure.Services
             _config = config;
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+        public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
         {
-            if (await _unitOfWork.Users.AnyEmailAsync(request.Email))
-                throw new AppException("Email already in use", 400);
+            var emailExist = await _unitOfWork.Users.AnyEmailAsync(request.Email);
+
+            if (emailExist)
+                return Result<AuthResponse>.Failure("Email already in use", 400);                
 
             var user = new User
             {
@@ -42,28 +46,40 @@ namespace FlowCore.Infrastructure.Services
             await _unitOfWork.Users.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
 
-            return await GenerateAuthResponse(user);
+
+            var response = await GenerateAuthResponse(user);
+
+            return Result<AuthResponse>.Success(response);
         }
 
-        public async Task<AuthResponse> LoginAsync(LoginRequest request)
+        public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request)
         {
-            var user = await _unitOfWork.Users.GetByEmailAsync(request.Email)
-                ?? throw new AppException("Invalid credentials", 401);
+            var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
 
-            if(!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-                throw new AppException("Invalid credentials", 401);
+            if (user == null)
+                return Result<AuthResponse>.Failure("Invalid credentials", 401);
 
-            return await GenerateAuthResponse(user);
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return Result<AuthResponse>.Failure("Invalid credentials", 401);
+
+            var response = await GenerateAuthResponse(user);
+
+            return Result<AuthResponse>.Success(response);
         }
 
-        public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)
+        public async Task<Result<AuthResponse>> RefreshTokenAsync(string refreshToken)
         {
-            var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken)
-                ?? throw new AppException("Invalid refresh token", 401);
+            var user = await _unitOfWork.Users.GetByRefreshTokenAsync(refreshToken);
+
+            if (user == null)
+                return Result<AuthResponse>.Failure("Invalid refresh token", 401);
+
             if (user.RefreshTokenExpiry < DateTime.UtcNow)
-                throw new AppException("Refresh token expired", 401);
+                return Result<AuthResponse>.Failure("Refresh token expired", 401);
 
-            return await GenerateAuthResponse(user);
+            var response = await GenerateAuthResponse(user);
+
+            return Result<AuthResponse>.Success(response);
         }
 
         private async Task<AuthResponse> GenerateAuthResponse(User user)
