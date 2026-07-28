@@ -44,7 +44,7 @@ namespace FlowCore.API.Controllers
             if (!result.IsSuccess)
                 return StatusCode(result.StatusCode, new { error = result.Error });
 
-            return Ok(result);
+            return Ok(result.Value);
         }
     }
 }
