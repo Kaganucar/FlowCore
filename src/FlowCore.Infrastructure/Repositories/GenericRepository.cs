@@ -1,6 +1,8 @@
 ﻿using FlowCore.Application.Interfaces;
+using FlowCore.Application.Specifications;
 using FlowCore.Domain.Entities;
 using FlowCore.Infrastructure.Persistence;
+using FlowCore.Infrastructure.Specifications;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -34,6 +36,11 @@ namespace FlowCore.Infrastructure.Repositories
         public async Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
             return await _dbSet.AsNoTracking().Where(predicate).ToListAsync(cancellationToken);
+        }
+        public async Task<List<T>> ListAsync(ISpecification<T> spec, CancellationToken cancellation = default)
+        {
+            var query = SpecificationEvaluator<T>.GetQuery(_dbSet.AsQueryable(), spec);
+            return await query.ToListAsync(cancellation);
         }
         public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {

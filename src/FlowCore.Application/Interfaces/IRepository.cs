@@ -1,4 +1,5 @@
-﻿using FlowCore.Domain.Entities;
+﻿using FlowCore.Application.Specifications;
+using FlowCore.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace FlowCore.Application.Interfaces
         Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
         Task<List<T>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<List<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+        Task<List<T>> ListAsync(ISpecification<T> spec, CancellationToken cancellationToken = default);
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken= default); 
         Task AddAsync(T entity, CancellationToken cancellationToken = default);
         void Update(T entity);

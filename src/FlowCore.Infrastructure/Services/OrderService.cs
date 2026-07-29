@@ -139,7 +139,7 @@ namespace FlowCore.Infrastructure.Services
         public async Task<Result<OrderResponse>> CancelAsync(Guid id, Guid requestingUserId)
         {
             var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
-            if (order == null) 
+            if (order == null)
                 return Result<OrderResponse>.Failure($"Order {id} not found", 404);
 
             var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
@@ -152,21 +152,17 @@ namespace FlowCore.Infrastructure.Services
             if (!isOwner && !isAdmin)
                 return Result<OrderResponse>.Failure("You are not allowed to cancel this order", 403);
 
-            if(order.Status == OrderStatus.Cancelled)
+            if (order.Status == OrderStatus.Cancelled)
                 return Result<OrderResponse>.Failure("Order is already cancelled", 400);
 
-            if(order.Status != OrderStatus.Pending)
+            if (order.Status != OrderStatus.Pending)
                 return Result<OrderResponse>.Failure("Only pending orders can be cancelled", 400);
 
-            foreach(var item in order.OrderItems)
+            foreach (var item in order.OrderItems)
             {
-                var product = await _unitOfWork.Products.GetByIdAsync(item.ProductId);
-                if (product != null)
-                {
-                    product.Stock += item.Quantity;
-                    _unitOfWork.Products.Update(product);
-                }
-               
+                item.Product.Stock += item.Quantity;
+                _unitOfWork.Products.Update(item.Product);
+
             }
 
             order.Status = OrderStatus.Cancelled;

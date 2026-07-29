@@ -3,6 +3,7 @@ using FlowCore.Application.DTOs.Category;
 using FlowCore.Application.DTOs.Product;
 using FlowCore.Application.Interfaces;
 using FlowCore.Domain.Entities;
+using FlowCore.Application.Specifications;
 using FlowCore.Domain.Exceptions;
 using FlowCore.Infrastructure.Persistence;
 using FlowCore.Infrastructure.UnitOfWork;
@@ -26,7 +27,7 @@ namespace FlowCore.Infrastructure.Services
 
         public async Task<List<ProductResponse>> GetProductsAsync()
         {
-            var products = await _unitOfWork.Products.GetAllAsync();
+            var products = await _unitOfWork.Products.ListAsync(new ProductsWithCategorySpec());
 
             return products.Select(p => new ProductResponse
             {
