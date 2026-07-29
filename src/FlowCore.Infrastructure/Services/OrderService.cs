@@ -2,6 +2,7 @@
 using FlowCore.Application.DTOs.Order;
 using FlowCore.Application.Interfaces;
 using FlowCore.Domain.Entities;
+using FlowCore.Domain.Enums;
 using FlowCore.Domain.Exceptions;
 using FlowCore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +34,7 @@ namespace FlowCore.Infrastructure.Services
                 UserName = order.User?.UserName ?? string.Empty,
                 OrderDate = order.OrderDate,
                 TotalAmount = order.TotalAmount,
+                Status = order.Status.ToString(),
                 Items = order.OrderItems.Select(i => new OrderItemResponse
                 {
                     ProductId = i.ProductId,
@@ -57,6 +59,7 @@ namespace FlowCore.Infrastructure.Services
                 UserName = order.User?.UserName ?? string.Empty,
                 OrderDate = order.OrderDate,
                 TotalAmount = order.TotalAmount,
+                Status = order.Status.ToString(),
                 Items = order.OrderItems.Select(i => new OrderItemResponse
                 {
                     ProductId = i.ProductId,
@@ -121,6 +124,7 @@ namespace FlowCore.Infrastructure.Services
                 UserName = user.UserName,
                 OrderDate = order.OrderDate,
                 TotalAmount = order.TotalAmount,
+                Status = order.Status.ToString(),
                 Items = order.OrderItems.Select(i => new OrderItemResponse
                 {
                     ProductId = i.ProductId,
@@ -132,10 +136,60 @@ namespace FlowCore.Infrastructure.Services
 
             return Result<OrderResponse>.Success(response);
         }
-        public Task<Result<OrderResponse>> CancelAsync(Guid id)
+        public async Task<Result<OrderResponse>> CancelAsync(Guid id, Guid requestingUserId)
         {
-            return Task.FromResult(
-                Result<OrderResponse>.Failure("Order cancellation is not implemented yet", 501));
+            var order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id);
+            if (order == null) 
+                return Result<OrderResponse>.Failure($"Order {id} not found", 404);
+
+            var requestingUser = await _unitOfWork.Users.GetByIdAsync(requestingUserId);
+            if (requestingUser == null)
+                return Result<OrderResponse>.Failure("User not found", 404);
+
+            var isOwner = order.UserId == requestingUserId;
+            var isAdmin = requestingUser.Role == UserRole.Admin;
+
+            if (!isOwner && !isAdmin)
+                return Result<OrderResponse>.Failure("You are not allowed to cancel this order", 403);
+
+            if(order.Status == OrderStatus.Cancelled)
+                return Result<OrderResponse>.Failure("Order is already cancelled", 400);
+
+            if(order.Status != OrderStatus.Pending)
+                return Result<OrderResponse>.Failure("Only pending orders can be cancelled", 400);
+
+            foreach(var item in order.OrderItems)
+            {
+                var product = await _unitOfWork.Products.GetByIdAsync(item.ProductId);
+                if (product != null)
+                {
+                    product.Stock += item.Quantity;
+                    _unitOfWork.Products.Update(product);
+                }
+               
+            }
+
+            order.Status = OrderStatus.Cancelled;
+            await _unitOfWork.SaveChangesAsync();
+
+            var response = new OrderResponse
+            {
+                Id = order.Id,
+                UserId = order.UserId,
+                UserName = order.User?.UserName ?? string.Empty,
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                Status = order.Status.ToString(),
+                Items = order.OrderItems.Select(i => new OrderItemResponse
+                {
+                    ProductId = i.ProductId,
+                    ProductName = i.Product?.Name ?? string.Empty,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                }).ToList()
+            };
+
+            return Result<OrderResponse>.Success(response);
         }
     }
 

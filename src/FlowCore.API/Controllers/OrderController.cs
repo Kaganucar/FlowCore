@@ -54,7 +54,9 @@ namespace FlowCore.API.Controllers
         [Authorize]
         public async Task<IActionResult> Cancel(Guid id)
         {
-            var result = await _orderService.CancelAsync(id);
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var result = await _orderService.CancelAsync(id, userId);
             if (!result.IsSuccess)
                 return StatusCode(result.StatusCode, new { error = result.Error });
 

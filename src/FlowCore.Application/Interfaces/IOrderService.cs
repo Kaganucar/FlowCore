@@ -13,6 +13,6 @@ namespace FlowCore.Application.Interfaces
         Task<List<OrderResponse>> GetAllAsync();
         Task<Result<OrderResponse>> GetByIdAsync(Guid id);
         Task<Result<OrderResponse>> CreateAsync(CreateOrderRequest request, Guid userId);
-        Task<Result<OrderResponse>> CancelAsync(Guid id);
+        Task<Result<OrderResponse>> CancelAsync(Guid id, Guid requestingUserId);
     }
 }
