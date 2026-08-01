@@ -12,6 +12,8 @@ namespace FlowCore.Application.Specifications
         public Expression<Func<T, bool>>? Criteria { get; private set; }
         public List<Expression<Func<T, object>>> Includes { get; } = new();
 
+        public Expression<Func<T, object>>? OrderBy { get; private set; }
+
         protected BaseSpecification()
         {
 
@@ -25,6 +27,11 @@ namespace FlowCore.Application.Specifications
         protected void AddInclude(Expression<Func<T, object>> includeExpression)
         {
             Includes.Add(includeExpression);
+        }
+
+        protected void ApplyOrderBy(Expression<Func<T, object>> orderByExpression)
+        {
+            OrderBy = orderByExpression;
         }
     }
 }

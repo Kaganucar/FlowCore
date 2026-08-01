@@ -1,4 +1,4 @@
-﻿using FlowCore.Application.Common;
+﻿    using FlowCore.Application.Common;
 using FlowCore.Application.DTOs.Product;
 using FlowCore.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +23,13 @@ namespace FlowCore.API.Controllers
             var products = await _productService.GetProductsAsync();
             return Ok(products);
         }
+
+        [HttpGet("in-stock")]
+        public async Task<IActionResult> GetInStock()
+        {
+            var result = await _productService.GetInStockProductsAsync();
+            return Ok(result);
+        }   
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)

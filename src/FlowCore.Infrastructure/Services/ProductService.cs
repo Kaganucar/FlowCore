@@ -41,6 +41,23 @@ namespace FlowCore.Infrastructure.Services
             }).ToList();
         }
 
+
+        public async Task<List<ProductResponse>> GetInStockProductsAsync()
+        {
+            var products = await _unitOfWork.Products.ListAsync(new ProductsInStockSpec());
+
+            return products.Select(p => new ProductResponse
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                Stock = p.Stock,
+                CategoryName = p.Category?.Name ?? string.Empty,
+                CreatedAt = p.CreatedAt
+            }).ToList();
+        }
+
         public async Task<Result<ProductResponse>> GetByIdAsync(Guid id)
         {
             var product = await _unitOfWork.Products.GetByIdWithCategoryAsync(id);

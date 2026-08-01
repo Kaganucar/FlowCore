@@ -11,6 +11,7 @@ namespace FlowCore.Application.Interfaces
     public interface IProductService
     {
         Task<List<ProductResponse>> GetProductsAsync();
+        Task<List<ProductResponse>> GetInStockProductsAsync();
         Task<Result<ProductResponse>> GetByIdAsync(Guid id);
         Task<Result<ProductResponse>> CreateAsync(CreateProductRequest request);
         Task<Result<ProductResponse>> UpdateAsync(Guid id, UpdateProductRequest request);
