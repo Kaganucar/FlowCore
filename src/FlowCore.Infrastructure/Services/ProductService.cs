@@ -24,7 +24,6 @@ namespace FlowCore.Infrastructure.Services
         {
             _unitOfWork = unitOfWork;
         }
-
         public async Task<List<ProductResponse>> GetProductsAsync()
         {
             var products = await _unitOfWork.Products.ListAsync(new ProductsWithCategorySpec());
@@ -40,8 +39,6 @@ namespace FlowCore.Infrastructure.Services
                 CreatedAt = p.CreatedAt
             }).ToList();
         }
-
-
         public async Task<List<ProductResponse>> GetInStockProductsAsync()
         {
             var products = await _unitOfWork.Products.ListAsync(new ProductsInStockSpec());

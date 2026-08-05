@@ -38,7 +38,6 @@ namespace FlowCore.Infrastructure.Repositories
             return await _dbSet.AsNoTracking().Where(predicate).ToListAsync(cancellationToken);
         }
         public async Task<List<T>> ListAsync(ISpecification<T> spec, CancellationToken cancellation = default)
-
         {
             var query = SpecificationEvaluator<T>.GetQuery(_dbSet.AsQueryable(), spec);
             return await query.ToListAsync(cancellation);

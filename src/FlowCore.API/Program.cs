@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using FlowCore.Application.Features.Products.Queries.GetProductById;
 using FlowCore.Application.Interfaces;
 using FlowCore.Application.Validators;
 using FlowCore.Domain.Exceptions;
@@ -66,6 +67,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IUnitOfWork, FlowCore.Infrastructure.UnitOfWork.UnitOfWork>();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetProductByIdQuery).Assembly));
 
 var app = builder.Build();
 

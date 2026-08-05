@@ -1,6 +1,9 @@
 ﻿    using FlowCore.Application.Common;
 using FlowCore.Application.DTOs.Product;
+using FlowCore.Application.Features.Products.Commands.CreateProduct;
+using FlowCore.Application.Features.Products.Queries.GetProductById;
 using FlowCore.Application.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,10 +14,12 @@ namespace FlowCore.API.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly IMediator _mediator;
 
-        public ProductController(IProductService productService)
+        public ProductController(IProductService productService, IMediator mediator)
         {
             _productService = productService;
+            _mediator = mediator;
         }
 
         [HttpGet]
@@ -34,7 +39,7 @@ namespace FlowCore.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _productService.GetByIdAsync(id);
+            var result = await _mediator.Send(new GetProductByIdQuery { Id = id });
 
             if (!result.IsSuccess)
             {
@@ -48,7 +53,16 @@ namespace FlowCore.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateProductRequest request)
         {
-           var result = await _productService.CreateAsync(request);
+            var command = new CreateProductCommand
+            {
+                Name = request.Name,
+                Description = request.Description,
+                Price = request.Price,
+                Stock = request.Stock,
+                CategoryId = request.CategoryId,
+            };
+
+            var result = await _mediator.Send(command);
 
            if(!result.IsSuccess)
                 return StatusCode(result.StatusCode, new {error = result.Error});
