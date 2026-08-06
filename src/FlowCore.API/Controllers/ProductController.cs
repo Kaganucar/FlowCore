@@ -1,6 +1,8 @@
 ﻿    using FlowCore.Application.Common;
 using FlowCore.Application.DTOs.Product;
 using FlowCore.Application.Features.Products.Commands.CreateProduct;
+using FlowCore.Application.Features.Products.Commands.DeleteProduct;
+using FlowCore.Application.Features.Products.Commands.UpdateProduct;
 using FlowCore.Application.Features.Products.Queries.GetProductById;
 using FlowCore.Application.Interfaces;
 using MediatR;
@@ -74,7 +76,16 @@ namespace FlowCore.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
         {
-            var result = await _productService.UpdateAsync(id, request);
+            var command = new UpdateProductCommand
+            {
+                Id = id,
+                Name = request.Name,
+                Description = request.Description,
+                Price = request.Price,
+                Stock = request.Stock,
+            };
+
+            var result = await _mediator.Send(command);
 
             if (!result.IsSuccess)
                 return StatusCode(result.StatusCode, new { error = result.Error });
@@ -87,7 +98,12 @@ namespace FlowCore.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var result = await _productService.DeleteAsync(id);
+            var command = new DeleteProductCommand
+            {
+                Id = id
+            };
+
+            var result = await _mediator.Send(command);
             
             if (!result.IsSuccess)
                 return StatusCode(result.StatusCode, new { error = result.Error });
