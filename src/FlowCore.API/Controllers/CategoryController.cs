@@ -1,6 +1,10 @@
 ﻿using FlowCore.Application.DTOs.Category;
+using FlowCore.Application.Features.Categories.Commands.CreateCategory;
+using FlowCore.Application.Features.Categories.Commands.DeleteCategory;
+using FlowCore.Application.Features.Categories.Queries.GetCategoryById;
 using FlowCore.Application.Interfaces;
 using FlowCore.Infrastructure.Persistence;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +16,12 @@ namespace FlowCore.API.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
+        private readonly IMediator _mediator;
 
-        public CategoryController(ICategoryService categoryService)
+        public CategoryController(ICategoryService categoryService, IMediator mediator)
         {
             _categoryService = categoryService;
+            _mediator = mediator;
         }
 
         [HttpGet]
@@ -28,7 +34,7 @@ namespace FlowCore.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _categoryService.GetByIdAsync(id);
+            var result = await _mediator.Send(new GetCategoryByIdQuery {Id = id});
             if (!result.IsSuccess) 
             {
                 return StatusCode(result.StatusCode, new { error = result.Error });
@@ -41,7 +47,12 @@ namespace FlowCore.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateCategoryRequest request)
         {
-            var result = await _categoryService.CreateAsync(request);
+            var command = new CreateCategoryCommand
+            {
+                Name = request.Name,
+            };
+
+            var result = await _mediator.Send(command);
 
             if (!result.IsSuccess)
             {
@@ -55,7 +66,9 @@ namespace FlowCore.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var result = await _categoryService.DeleteAsync(id);
+            var command = new DeleteCategoryCommand { Id = id };
+
+            var result = await _mediator.Send(command);
 
             if(!result.IsSuccess)
                 return StatusCode(result.StatusCode, new { error = result.Error });
