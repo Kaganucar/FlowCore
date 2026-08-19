@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using FlowCore.Application.Common.Behaviors;
 using FlowCore.Application.Features.Products.Queries.GetProductById;
 using FlowCore.Application.Interfaces;
 using FlowCore.Application.Validators;
@@ -66,8 +67,12 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUnitOfWork, FlowCore.Infrastructure.UnitOfWork.UnitOfWork>();
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GetProductByIdQuery).Assembly));
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssembly(typeof(GetProductByIdQuery).Assembly);
+    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+    });
 
 var app = builder.Build();
 
@@ -90,6 +95,12 @@ app.UseExceptionHandler(errorApp =>
             context.Response.StatusCode = appEx.StatusCode;
             context.Response.ContentType = "application/json";
             await context.Response.WriteAsJsonAsync(new { error = appEx.Message });
+        }
+        else if (feature?.Error is FluentValidation.ValidationException validationEx)
+        {
+            context.Response.StatusCode = 400;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { error = validationEx.Message });
         }
         else
         {

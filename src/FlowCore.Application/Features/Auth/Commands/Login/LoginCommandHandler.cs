@@ -1,0 +1,56 @@
+﻿using FlowCore.Application.Common;
+using FlowCore.Application.DTOs.Auth;
+using FlowCore.Application.Interfaces;
+using FlowCore.Domain.Entities;
+using MediatR;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace FlowCore.Application.Features.Auth.Commands.Login
+{
+    public class LoginCommandHandler : IRequestHandler<LoginCommand , Result<AuthResponse>>
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ITokenService _tokenService;
+        private readonly IConfiguration _configuration;
+
+        public LoginCommandHandler(IUnitOfWork unitOfWork, ITokenService tokenService, IConfiguration configuration)
+        {
+            _unitOfWork = unitOfWork;
+            _tokenService = tokenService;
+            _configuration = configuration;
+        }
+
+        public async Task<Result<AuthResponse>> Handle(LoginCommand request,CancellationToken cancellationToken)
+        {
+            var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+
+            if (user == null)
+                return Result<AuthResponse>.Failure("Invalid credentials", 401);
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return Result<AuthResponse>.Failure("Invalid credentials", 401);
+
+            var accessToken = _tokenService.GenerateAccessToken(user);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(_configuration.GetValue<int>("Jwt:RefreshTokenExpiryDays", 7));
+
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result<AuthResponse>.Success(new AuthResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken= refreshToken,
+                UserName = user.UserName,
+                Role = user.Role.ToString(),
+            });
+
+        }
+    }
+}
