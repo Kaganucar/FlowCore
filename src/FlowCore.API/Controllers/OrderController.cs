@@ -1,6 +1,8 @@
 ﻿using FlowCore.Application.Common;
 using FlowCore.Application.DTOs.Order;
+using FlowCore.Application.Features.Orders.Commands.CancelOrder;
 using FlowCore.Application.Features.Orders.Commands.CreateOrder;
+using FlowCore.Application.Features.Orders.Queries.GetAllOrders;
 using FlowCore.Application.Features.Orders.Queries.GetOrderById;
 using FlowCore.Application.Interfaces;
 using MediatR;
@@ -15,19 +17,17 @@ namespace FlowCore.API.Controllers
 
     public class OrderController : ControllerBase
     {
-        private readonly IOrderService _orderService;
         private readonly IMediator _mediator;
 
-        public OrderController(IOrderService orderService, IMediator mediator)
+        public OrderController(IMediator mediator)
         {
-            _orderService = orderService;   
             _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var order = await _orderService.GetAllAsync();
+            var order = await _mediator.Send(new GetAllOrdersQuery());
             return Ok(order);
         }
 
@@ -67,7 +67,13 @@ namespace FlowCore.API.Controllers
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            var result = await _orderService.CancelAsync(id, userId);
+            var command = new CancelOrderCommand
+            {
+                Id = id,
+                RequestingUserId = userId
+            };
+
+            var result = await _mediator.Send(command);
             if (!result.IsSuccess)
                 return StatusCode(result.StatusCode, new { error = result.Error });
 

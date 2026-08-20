@@ -1,6 +1,7 @@
 ﻿using FlowCore.Application.DTOs.Category;
 using FlowCore.Application.Features.Categories.Commands.CreateCategory;
 using FlowCore.Application.Features.Categories.Commands.DeleteCategory;
+using FlowCore.Application.Features.Categories.Queries.GetAllCategories;
 using FlowCore.Application.Features.Categories.Queries.GetCategoryById;
 using FlowCore.Application.Interfaces;
 using FlowCore.Infrastructure.Persistence;
@@ -15,19 +16,17 @@ namespace FlowCore.API.Controllers
     [Route("api/[controller]")]
     public class CategoryController : ControllerBase
     {
-        private readonly ICategoryService _categoryService;
         private readonly IMediator _mediator;
 
-        public CategoryController(ICategoryService categoryService, IMediator mediator)
+        public CategoryController(IMediator mediator)
         {
-            _categoryService = categoryService;
             _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var categories = await _categoryService.GetAllAsync();
+            var categories = await _mediator.Send(new GetAllCategoriesQuery());
             return Ok(categories);
         }
 

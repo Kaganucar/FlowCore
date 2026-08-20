@@ -3,6 +3,8 @@ using FlowCore.Application.DTOs.Product;
 using FlowCore.Application.Features.Products.Commands.CreateProduct;
 using FlowCore.Application.Features.Products.Commands.DeleteProduct;
 using FlowCore.Application.Features.Products.Commands.UpdateProduct;
+using FlowCore.Application.Features.Products.Queries.GetAllProducts;
+using FlowCore.Application.Features.Products.Queries.GetInStockProducts;
 using FlowCore.Application.Features.Products.Queries.GetProductById;
 using FlowCore.Application.Interfaces;
 using MediatR;
@@ -15,26 +17,24 @@ namespace FlowCore.API.Controllers
     [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
-        private readonly IProductService _productService;
         private readonly IMediator _mediator;
 
-        public ProductController(IProductService productService, IMediator mediator)
+        public ProductController(IMediator mediator)
         {
-            _productService = productService;
             _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var products = await _productService.GetProductsAsync();
+            var products = await _mediator.Send(new GetAllProductsQuery());
             return Ok(products);
         }
 
         [HttpGet("in-stock")]
         public async Task<IActionResult> GetInStock()
         {
-            var result = await _productService.GetInStockProductsAsync();
+            var result = await _mediator.Send(new GetInStockProductsQuery());
             return Ok(result);
         }   
 

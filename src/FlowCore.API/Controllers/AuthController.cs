@@ -13,12 +13,10 @@ namespace FlowCore.API.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authService;
         private readonly IMediator _mediatR;
 
-        public AuthController(IAuthService authService, IMediator mediator)
+        public AuthController(IMediator mediator)
         {
-            _authService = authService;
             _mediatR = mediator;
         }
 
