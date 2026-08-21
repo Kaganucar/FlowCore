@@ -11,5 +11,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flowcore-api
+    ports:
+      - "8080:8080"
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=FlowCoreDb;Username=flowcore;Password=flowcore123"
+      ASPNETCORE_URLS: "http://+:8080"
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
