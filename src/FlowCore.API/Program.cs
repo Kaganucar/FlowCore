@@ -20,6 +20,15 @@ builder.Services.AddControllers();
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryRequestValidator>();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactDev", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -107,6 +116,7 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+app.UseCors("AllowReactDev");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
