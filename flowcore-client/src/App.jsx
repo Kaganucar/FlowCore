@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react"
+import ProductList from "./ProductList"
+
 function App() {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -28,13 +30,7 @@ function App() {
     return(
         <div>
             <h1>FlowCore Urunler</h1>
-            <ul>
-                {products.map((product) => (
-                    <li key={product.id}>
-                        {product.name} - {product.price} TL ({product.categoryName})
-                    </li>
-                ))}
-            </ul>
+            <ProductList products={products} />
         </div>
     )
 }
