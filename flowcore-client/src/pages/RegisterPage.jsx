@@ -36,36 +36,40 @@ function RegisterPage() {
   }
 
   return(
-    <div>
-      <h2>Kayıt Ol</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <input 
+    <div className="mx-auto mt-16 max-w-sm px-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-800">Kayit Ol</h2>
+        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+          <input
             type="text"
-            placeholder="Kullanıcı adı"
+            placeholder="Kullanici adi"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-           />
-        </div>
-        <div>
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          />
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
-        </div>
-        <div>
           <input
             type="password"
             placeholder="Sifre"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
-        </div>
-        {error && <p style={{color: 'red'}}>{error}</p>}
-        <button type="submit">Kayit Ol</button>
-      </form>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button
+            type="submit"
+            className="mt-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            Kayit Ol
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
