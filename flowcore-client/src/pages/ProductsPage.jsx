@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import ProductList from "../ProductList";
 import { data } from "react-router-dom";
+import { useAuth } from "../AuthContext";
 
 function ProductPage() {
+    const {user} = useAuth()
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -35,6 +37,22 @@ function ProductPage() {
         .catch((err) => console.error(err))
     }, [])
 
+    function handleDelete(productId){
+        fetch(`${import.meta.env.VITE_API_URL}/Product/${productId}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        })
+        .then((response) => {
+            if(!response.ok){
+                throw new Error('Silme Başarısız')
+            }
+            setProducts((prev) => prev.filter((p) => p.id !== productId))
+        })
+        .cath((err) => alert(err.message))
+    }
+
     const filteredProducts = products.filter((product) => {
         const matchesSearch = product.name.toLowerCase().includes(searchText.toLocaleLowerCase())
         const matchesCategory = selectedCategory === '' || product.categoryName === selectedCategory
@@ -63,7 +81,11 @@ function ProductPage() {
                 </option>
             ))}
             </select>
-            <ProductList products={filteredProducts} />
+            <ProductList 
+                products={filteredProducts} 
+                isAdmin={user?.role === 'Admin'}
+                onDelete={handleDelete}
+            />
         </div>
     )
 }
