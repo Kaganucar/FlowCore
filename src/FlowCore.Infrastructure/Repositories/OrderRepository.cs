@@ -16,6 +16,7 @@ namespace FlowCore.Infrastructure.Repositories
         public async Task<List<Order>> GetAllUserOrdersAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             return await _context.Orders
+                 .Include(o => o.User)
                  .Include(o => o.OrderItems)
                  .ThenInclude(oi => oi.Product)
                  .Where(o => o.UserId == userId)

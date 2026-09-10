@@ -12,5 +12,7 @@ namespace FlowCore.Application.Features.Orders.Queries.GetOrderById
     public class GetOrderByIdQuery : IRequest<Result<OrderResponse>>
     {
         public Guid Id { get; set; }
+        public Guid RequestingUserId { get; set; }
+        public bool isAdmin { get; set; }
     }
 }

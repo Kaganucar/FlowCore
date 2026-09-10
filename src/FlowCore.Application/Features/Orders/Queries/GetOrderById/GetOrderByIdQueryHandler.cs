@@ -29,6 +29,11 @@ namespace FlowCore.Application.Features.Orders.Queries.GetOrderById
                 return Result<OrderResponse>.Failure($"Order {request.Id} not found", 404);
             }
 
+            if(!request.isAdmin && orders.UserId != request.RequestingUserId)
+            {
+                return Result<OrderResponse>.Failure("You are not authorized to access this order", 403);
+            }
+
             var response = new OrderResponse
             {
                 Id = orders.Id,

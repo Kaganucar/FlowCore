@@ -20,7 +20,9 @@ namespace FlowCore.Application.Features.Orders.Queries.GetAllOrders
 
         public async Task<List<OrderResponse>> Handle(GetAllOrdersQuery request, CancellationToken cancellationToken)
         {
-            var orders = await _unitOfWork.Orders.GetAllWithDetailsAsync();
+            var orders = request.IsAdmin
+                ? await _unitOfWork.Orders.GetAllWithDetailsAsync()
+                : await _unitOfWork.Orders.GetAllUserOrdersAsync(request.RequestingUserId);
             
             return orders.Select(o => new OrderResponse
             {

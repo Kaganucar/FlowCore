@@ -10,5 +10,7 @@ namespace FlowCore.Application.Features.Orders.Queries.GetAllOrders
 {
     public class GetAllOrdersQuery : IRequest<List<OrderResponse>>
     {
+        public Guid RequestingUserId { get; set; }
+        public bool IsAdmin { get; set; }
     }
 }

@@ -25,16 +25,33 @@ namespace FlowCore.API.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAll()
         {
-            var order = await _mediator.Send(new GetAllOrdersQuery());
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var isAdmin = User.IsInRole("Admin");
+
+            var order = await _mediator.Send(new GetAllOrdersQuery
+            {
+                RequestingUserId = userId,
+                IsAdmin = isAdmin
+            });
             return Ok(order);
         }
 
         [HttpGet("{id:guid}")]
+        [Authorize]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _mediator.Send(new GetOrderByIdQuery { Id = id});
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var isAdmin = User.IsInRole("Admin");
+
+            var result = await _mediator.Send(new GetOrderByIdQuery
+            {
+                Id = id,
+                RequestingUserId= userId,
+                isAdmin = isAdmin
+            });
             if (!result.IsSuccess)
             {
                 return StatusCode(result.StatusCode, new { error = result.Error });
