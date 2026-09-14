@@ -25,7 +25,7 @@ export function CartProvider({ children }) {
     }
 
     function removeFromCart(productId) {
-        setItems((prev) => prev.filter((item) => item.productId !== product.id))
+        setItems((prev) => prev.filter((item) => item.productId !== productId))
     }
 
     function updateQuantity(productId, quantity) {
@@ -40,8 +40,8 @@ export function CartProvider({ children }) {
         setItems([])
     }
 
-    const totalCount = item.reduce((sum, item) => sum + item.quantity, 0)
-    const totalPrice = item.reduce((sum, item) => sum + item.quantity * item.price, 0)
+    const totalCount = items.reduce((sum, item) => sum + item.quantity, 0)
+    const totalPrice = items.reduce((sum, item) => sum + item.quantity * item.price, 0)
 
     return (
         <CartContext.Provider
