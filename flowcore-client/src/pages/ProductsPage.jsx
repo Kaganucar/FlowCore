@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import ProductList from "../ProductList";
-import { data, Form } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { useCart } from "../CartContext";
 
 function ProductsPage() {
     const { user } = useAuth()
+    const { addToCart } = useCart()
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -187,10 +188,11 @@ function ProductsPage() {
       )}
 
       <div className="mt-6">
-        <ProductList
+        <ProductList 
           products={filteredProducts}
           isAdmin={user?.role === 'Admin'}
           onDelete={handleDelete}
+          onAddToCart={addToCart}
         />
       </div>
     </div>

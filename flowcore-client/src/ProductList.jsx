@@ -1,6 +1,6 @@
-function ProductList({ products, isAdmin, onDelete}) {
-    return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+function ProductList({ products, isAdmin, onAddToCart, onDelete }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((product) => (
         <div
           key={product.id}
@@ -14,19 +14,31 @@ function ProductList({ products, isAdmin, onDelete}) {
               </span>
             </div>
             <p className="mt-2 text-lg font-bold text-indigo-600">{product.price} TL</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {product.stock > 0 ? `Stok: ${product.stock}` : 'Stokta yok'}
+            </p>
           </div>
-          {isAdmin && (
+          <div className="mt-4 flext-col gap-2">
             <button
-              onClick={() => onDelete(product.id)}
-              className="mt-4 w-full rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-100"
+              onClick={() => onAddToCart(product)}
+              disabled={product.stock === 0}
+              className="w-full rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              Sil
+              Sepete Ekle
             </button>
-          )}
+            {isAdmin && (
+              <button
+                onClick={() => onDelete(product.id)}
+                className="mt-4 w-full rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-100"
+              >
+                Sil
+              </button>
+            )}
+          </div>
         </div>
       ))}
     </div>
-    )
+  )
 }
 
 export default ProductList
