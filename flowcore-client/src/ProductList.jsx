@@ -18,7 +18,7 @@ function ProductList({ products, isAdmin, onAddToCart, onDelete }) {
               {product.stock > 0 ? `Stok: ${product.stock}` : 'Stokta yok'}
             </p>
           </div>
-          <div className="mt-4 flext-col gap-2">
+          <div className="mt-4 flex flex-col gap-2">
             <button
               onClick={() => onAddToCart(product)}
               disabled={product.stock === 0}
@@ -29,7 +29,7 @@ function ProductList({ products, isAdmin, onAddToCart, onDelete }) {
             {isAdmin && (
               <button
                 onClick={() => onDelete(product.id)}
-                className="mt-4 w-full rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-100"
+                className="w-full rounded-md bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-100"
               >
                 Sil
               </button>
