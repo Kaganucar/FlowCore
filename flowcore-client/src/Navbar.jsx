@@ -6,7 +6,6 @@ function Navbar() {
     const {user, logout} = useAuth()
     const {totalCount} = useCart()
 
-
     return (
         <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
