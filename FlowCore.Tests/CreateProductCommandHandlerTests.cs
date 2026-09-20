@@ -60,8 +60,11 @@ namespace FlowCore.Tests
 
             //Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal("Laptop", result.Value.Name);
-            Assert.Equal("Elektronik", result.Value.CategoryName);
+
+            var created = result.Value;
+            Assert.NotNull(created);
+            Assert.Equal("Laptop", created.Name);
+            Assert.Equal("Elektronik", created.CategoryName);
         }
 
         [Fact]
