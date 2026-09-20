@@ -1,6 +1,7 @@
-@FlowCore.API_HostAddress = http://localhost:5202
+@FlowCore.API_HostAddress = http://localhost:8080
 
-GET {{FlowCore.API_HostAddress}}/weatherforecast/
+GET {{FlowCore.API_HostAddress}}/api/Product
 Accept: application/json
 
-###
+GET {{FlowCore.API_HostAddress}}/api/Category
+Accept: application/json
