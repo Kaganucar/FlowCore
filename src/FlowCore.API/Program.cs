@@ -95,8 +95,11 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-app.UseSwagger();
-app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FlowCore API v1"));
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FlowCore API v1"));
+}
 
 app.UseExceptionHandler(errorApp =>
 {

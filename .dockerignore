@@ -1,0 +1,29 @@
+# Derleme ciktilari
+**/bin/
+**/obj/
+**/out/
+
+# Frontend bagimliliklari
+flowcore-client/node_modules/
+flowcore-client/dist/
+
+# Git ve IDE
+.git/
+.gitignore
+.github/
+.vs/
+.vscode/
+**/*.user
+
+# Gizli ve yerel dosyalar
+.env
+**/.env
+**/.env.local
+
+# Docker dosyalarinin kendisi
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Dokumantasyon
+**/*.md
