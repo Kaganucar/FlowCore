@@ -43,6 +43,9 @@ namespace FlowCore.Application.Features.Products.Commands.CreateProduct
 
             var createdProduct = await _unitOfWork.Products.GetByIdWithCategoryAsync(product.Id);
 
+            if(createdProduct is null)
+                return Result<ProductResponse>.Failure("Urun olusturuldu ancak geri okunamadi", 500);
+
             return Result<ProductResponse>.Success(new ProductResponse
             {
                 Id = createdProduct.Id,

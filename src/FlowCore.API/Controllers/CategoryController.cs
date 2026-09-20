@@ -3,12 +3,9 @@ using FlowCore.Application.Features.Categories.Commands.CreateCategory;
 using FlowCore.Application.Features.Categories.Commands.DeleteCategory;
 using FlowCore.Application.Features.Categories.Queries.GetAllCategories;
 using FlowCore.Application.Features.Categories.Queries.GetCategoryById;
-using FlowCore.Application.Interfaces;
-using FlowCore.Infrastructure.Persistence;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace FlowCore.API.Controllers
 {
@@ -53,7 +50,7 @@ namespace FlowCore.API.Controllers
 
             var result = await _mediator.Send(command);
 
-            if (!result.IsSuccess)
+            if (!result.IsSuccess || result.Value is null)
             {
                 return StatusCode(result.StatusCode, new { error = result.Error });
             }

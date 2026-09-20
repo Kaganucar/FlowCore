@@ -66,7 +66,7 @@ namespace FlowCore.API.Controllers
 
             var result = await _mediator.Send(command);
 
-           if(!result.IsSuccess)
+           if(!result.IsSuccess || result.Value is null)
                 return StatusCode(result.StatusCode, new {error = result.Error});
 
            return CreatedAtAction(nameof(GetById), new { id = result.Value.Id }, result.Value);
