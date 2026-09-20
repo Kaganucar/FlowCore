@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu al
+        uses: actions/checkout@v4
+
+      - name: .NET 9 kur
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Bagimliliklari indir
+        run: dotnet restore FlowCore.sln
+
+      - name: Derle
+        run: dotnet build FlowCore.sln -c Release --no-restore -p:TreatWarningsAsErrors=true
+
+      - name: Testleri kos
+        run: dotnet test FlowCore.sln -c Release --no-build --verbosity normal
+
+  frontend:
+    name: Frontend lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flowcore-client
+    steps:
+      - name: Kodu al
+        uses: actions/checkout@v4
+
+      - name: Node 22 kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: flowcore-client/package-lock.json
+
+      - name: Bagimliliklari yukle
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint src --max-warnings=0
+
+      - name: Derle
+        run: npm run build
