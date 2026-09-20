@@ -3,9 +3,9 @@ services:
     image: postgres:16
     container_name: flowcore-db
     environment:
-      POSTGRES_USER: flowcore
-      POSTGRES_PASSWORD: flowcore123
-      POSTGRES_DB: FlowCoreDb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -19,7 +19,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=FlowCoreDb;Username=flowcore;Password=flowcore123"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      Jwt__Key: ${JWT_KEY}
       ASPNETCORE_URLS: "http://+:8080"
     depends_on:
       - postgres

@@ -50,10 +50,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection eksik. Gelistirmede 'dotnet user-secrets', " +
+        "konteynerde ConnectionStrings__DefaultConnection ortam degiskenini kullanin.");
 
-var jwtKey = builder.Configuration["Jwt:Key"]!;
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException(
+        "Jwt:Key eksik. Gelistirmede 'dotnet user-secrets set \"Jwt:Key\" \"...\"', " +
+        "konteynerde Jwt__Key ortam degiskenini kullanin.");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
